@@ -50,7 +50,7 @@ public class FieldModel {
      *
      * @return String
      */
-    private String getJavaType() {
+    public String getJavaType() {
         return isVector ? TypeUtils.getJavaListFromAsType(type) : TypeUtils.getJavaTypeFromAsType(type);
     }
 

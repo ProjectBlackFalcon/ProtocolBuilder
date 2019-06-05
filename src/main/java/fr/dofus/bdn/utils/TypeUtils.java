@@ -2,6 +2,7 @@ package fr.dofus.bdn.utils;
 
 public final class TypeUtils {
 
+
     private TypeUtils() {
 
     }
@@ -93,16 +94,17 @@ public final class TypeUtils {
             case "boolean":
                 return "Boolean";
             default:
-                throw new IllegalArgumentException("This type does not have a Primitive type : " + type);
+                return type;
         }
     }
 
     /**
      * Get the java list string from an As type
+     *
      * @param type As type
      * @return String : java list string
      */
-    public static String getJavaListFromAsType(String type){
+    public static String getJavaListFromAsType(String type) {
         return "List<" + getJavaPrimitiveType(getJavaTypeFromAsType(type)) + ">";
     }
 }

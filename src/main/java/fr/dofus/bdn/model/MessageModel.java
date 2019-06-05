@@ -1,5 +1,6 @@
 package fr.dofus.bdn.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,7 +17,7 @@ public class MessageModel {
 	private long protocolId;
 
     @JsonProperty(value = "Fields")
-	private List<FieldModel> fieldModels;
+	private List<FieldModel> fieldModels = new ArrayList<>();
 
     @JsonProperty(value = "Namespace")
 	private String namespace;
@@ -37,6 +38,10 @@ public class MessageModel {
 	}
 
 	public List<FieldModel> getFieldModels() {
+		if (this.fieldModels == null){
+			this.fieldModels = new ArrayList<>();
+		}
+
 		return fieldModels;
 	}
 

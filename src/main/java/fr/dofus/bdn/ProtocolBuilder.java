@@ -23,25 +23,31 @@ public class ProtocolBuilder {
 
     private D2JsonModel d2JsonModel;
 
-
-    private long current;
-
     public ProtocolBuilder(final D2JsonModel d2JsonModel) {
         this.d2JsonModel = d2JsonModel;
     }
 
-    public void generateClasses(){
+    public void generateClasses() {
+        long startTime = System.currentTimeMillis();
         log.info("Generating files...");
+
         OutputUtils.init(System.currentTimeMillis(), (long) d2JsonModel.getMessages().size());
         log.info("Generating Messages...");
         d2JsonModel.getMessages().forEach(this::generateClass);
+
         OutputUtils.init(System.currentTimeMillis(), (long) d2JsonModel.getTypes().size());
         log.info("Generating Types...");
         d2JsonModel.getTypes().forEach(this::generateClass);
-        log.info("Generating files... done!");
+
+        OutputUtils.init(System.currentTimeMillis(), (long) d2JsonModel.getEnums().size());
+        log.info("Generating Enums...");
+        d2JsonModel.getEnums().forEach(this::generateEnum);
+
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        log.info(String.format("Generating files... done in %s,%ss!", elapsedTime / 1000, elapsedTime % 1000));
     }
 
-    private void generateClass(final MessageModel messageModel){
+    private void generateClass(final MessageModel messageModel) {
         OutputUtils.printProgress();
         StringBuilder builder = new StringBuilder();
         builder.append("package ").append(messageModel.getNamespace()).append(";");
@@ -105,7 +111,7 @@ public class ProtocolBuilder {
                 builder.append(StrUtils.appendLineTabbed(3, method))
             );
 
-            if (!bbwSerialize){
+            if (!bbwSerialize) {
                 continue;
             }
 
@@ -114,10 +120,10 @@ public class ProtocolBuilder {
             }
 
 
-            if (i == messageModel.getFieldModels().size() - 1){
+            if (i == messageModel.getFieldModels().size() - 1) {
                 builder.append(StrUtils.appendLineTabbed(3, "writer.writeByte(flag);"));
             } else {
-                if (!messageModel.getFieldModels().get(i + 1).isBbw()){
+                if (!messageModel.getFieldModels().get(i + 1).isBbw()) {
                     builder.append(StrUtils.appendLineTabbed(3, "writer.writeByte(flag);"));
                 }
             }
@@ -164,34 +170,34 @@ public class ProtocolBuilder {
 
     }
 
-    private String getImports(final MessageModel messageModel){
+    private String getImports(final MessageModel messageModel) {
         Set<String> imports = new HashSet<>();
 
         imports.add(StrUtils.appendLine("import java.io.IOException;"));
         imports.add(StrUtils.appendLine("import com.ankamagames.dofus.utils.DofusDataReader;"));
         imports.add(StrUtils.appendLine("import com.ankamagames.dofus.utils.DofusDataWriter;"));
 
-        if (!messageModel.getParents().isEmpty()){
+        if (!messageModel.getParents().isEmpty()) {
             imports.add(StrUtils.appendLine("import " + messageModel.getParents()));
         } else {
             imports.add(StrUtils.appendLine("import com.ankamagames.dofus.NetworkMessage"));
         }
 
         messageModel.getFieldModels().forEach(field -> {
-            if (field.isVector()){
+            if (field.isVector()) {
                 imports.add(StrUtils.appendLine("import java.util.ArrayList;"));
                 imports.add(StrUtils.appendLine("import java.util.List;"));
             }
-            if (field.isBbw()){
+            if (field.isBbw()) {
                 imports.add(StrUtils.appendLine("import com.ankamagames.dofus.util.types.BooleanByteWrapper;"));
             }
-            if (field.isUseTypeManager()){
+            if (field.isUseTypeManager()) {
                 imports.add(StrUtils.appendLine("import com.ankamagames.dofus.utils.ProtocolTypeManager;"));
             }
 
             String type = field.getImportType();
 
-            if(type != null){
+            if (type != null) {
                 imports.add(StrUtils.appendLine(
                     "import " + this.d2JsonModel.findMessageByName(type).getNamespace() + "." + type)
                 );
@@ -203,12 +209,58 @@ public class ProtocolBuilder {
         return builder.toString();
     }
 
-    private void generateEnum(final EnumModel enumModel){
-        //TODO
+    private void generateEnum(final EnumModel enumModel) {
+        OutputUtils.printProgress();
+        StringBuilder builder = new StringBuilder();
+        builder.append("package com.ankamagames.dofus.network.enums;");
+
+        builder.append(System.lineSeparator());
+
+        builder.append(StrUtils.appendLine(String.format("public enum %s {", enumModel.getName())));
+
+        builder.append(System.lineSeparator());
+
+        String constructorParams = enumModel
+            .getValues()
+            .stream()
+            .map(field -> StrUtils.appendFormatedLine(1, "%s(%s)", field.getName(), field.getValue()))
+            .collect(Collectors.joining(","));
+
+        builder.append(constructorParams).append(";");
+
+        builder.append(System.lineSeparator());
+
+        builder.append(StrUtils.appendLineTabbed("private final int value;"));
+
+        builder.append(System.lineSeparator());
+
+        builder.append(StrUtils.appendFormatedLine(1, "public %s(int value){ this.value = value; }",
+            enumModel.getName())
+        );
+
+        builder.append(System.lineSeparator());
+
+        builder.append(StrUtils.appendLineTabbed("public int value() { return this.value; }"));
+
+        builder.append(System.lineSeparator());
+
+        builder.append(StrUtils.appendFormatedLine(1, "public %s get(int value){", enumModel.getName()));
+        builder.append(StrUtils.appendLineTabbed(2, "return Stream.of(values()).filter(current -> current.value == value).findAny().orElse(null);"));
+
+        builder.append(StrUtils.appendLineTabbed("}"));
+
+        builder.append(System.lineSeparator());
+        builder.append(StrUtils.appendLine("}"));
+
+        try {
+            FilesUtils.writeFile(
+                builder.toString(), "com/ankamagames/dofus/network/enums/" + enumModel.getName() + ".java"
+            );
+        } catch (IOException e) {
+            throw new Error("Cannot generate file", e);
+        }
+
     }
-
-
-
 
 
 }

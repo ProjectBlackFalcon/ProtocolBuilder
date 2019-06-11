@@ -45,7 +45,7 @@ public final class TypeUtils {
                 var = "readBoolean()";
                 break;
             case "writeFloat":
-                var = "readDouble()";
+                var = "readFloat()";
                 break;
             case "writeUnsignedInt":
                 var = "readUnsignedByte()";

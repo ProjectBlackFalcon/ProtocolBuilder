@@ -64,7 +64,6 @@ public class FilesUtils {
      */
     public static String readFile(URL url) throws URISyntaxException, IOException {
         return new String(Files.readAllBytes(Paths.get(url.toURI())));
-
     }
 
 

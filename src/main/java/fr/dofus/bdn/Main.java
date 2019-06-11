@@ -19,6 +19,7 @@ public class Main {
         String pathInvoker = args[0];
 
         D2JsonModel d2json = FilesUtils.useD2Json(pathInvoker);
+
         ProtocolBuilder builder = new ProtocolBuilder(d2json);
         builder.generateClasses();
     }

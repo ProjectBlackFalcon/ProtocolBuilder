@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+
+import static fr.dofus.bdn.ProtocolBuilder.PROCOTOL_ID;
+
 public class SerializeUtils {
 
     private SerializeUtils(){
@@ -13,14 +16,14 @@ public class SerializeUtils {
 
     public static List<String> serialiseBbw(final long bbwPosition, final String name){
         List<String> serialiseList = new ArrayList<>();
-        if (bbwPosition == 0) {
-            serialiseList.add("flag = (byte) reader.readUnsignedByte();");
-        }
         serialiseList.add(String.format(
             "flag = BooleanByteWrapper.SetFlag(%s, flag, %s);",
             bbwPosition,
             name)
         );
+        if (bbwPosition == 7) {
+            serialiseList.add("writer.writeByte(flag);");
+        }
         return serialiseList;
     }
 
@@ -40,7 +43,7 @@ public class SerializeUtils {
         }
 
         if (useTypeManager) {
-            serialiseList.add(StrUtils.formatTab("writer.writeShort(%s.ID);", type));
+            serialiseList.add(StrUtils.formatTab("writer.writeShort(%s.%s);", type, PROCOTOL_ID));
             serialiseList.add(StrUtils.formatTab("this.%s.get(i).serialize(writer);", name));
 
         } else if (writeMethod.isEmpty()) {
@@ -58,7 +61,7 @@ public class SerializeUtils {
                                                     final String type,
                                                     final String name){
         if (useTypeManager) {
-            return Collections.singletonList(String.format("writer.%s(%s.ID);", writeMethod, type));
+            return Collections.singletonList(String.format("writer.%s(%s.%s);", writeMethod, type, PROCOTOL_ID));
         } else if (writeMethod.isEmpty()) {
             return Collections.singletonList(String.format("%s.serialize(writer);", name));
         } else {

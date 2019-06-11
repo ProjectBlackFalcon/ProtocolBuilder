@@ -62,6 +62,15 @@ public final class StrUtils {
     }
 
     /**
+     * Append a new formated line
+     * @param text Text to append
+     * @return Text appened at a new line
+     */
+    public static String appendFormatedLine(int tabs, String text, Object... args){
+        return System.lineSeparator() + formatTab(tabs, text, args);
+    }
+
+    /**
      * Append a new line
      * @param text Text to append
      * @return Text appened at a new line

@@ -3,27 +3,46 @@ package fr.dofus.bdn;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.log4j.Logger;
 
 import fr.dofus.bdn.model.D2JsonModel;
 import fr.dofus.bdn.model.EnumModel;
+import fr.dofus.bdn.model.FieldModel;
 import fr.dofus.bdn.model.MessageModel;
 import fr.dofus.bdn.utils.FilesUtils;
+import fr.dofus.bdn.utils.OutputUtils;
 import fr.dofus.bdn.utils.StrUtils;
 
 public class ProtocolBuilder {
 
+    private static final Logger log = Logger.getLogger(ProtocolBuilder.class);
+
+    public static final String PROCOTOL_ID = "PROTOCOL_ID";
+
     private D2JsonModel d2JsonModel;
+
+
+    private long current;
 
     public ProtocolBuilder(final D2JsonModel d2JsonModel) {
         this.d2JsonModel = d2JsonModel;
     }
 
     public void generateClasses(){
+        log.info("Generating files...");
+        OutputUtils.init(System.currentTimeMillis(), (long) d2JsonModel.getMessages().size());
+        log.info("Generating Messages...");
         d2JsonModel.getMessages().forEach(this::generateClass);
+        OutputUtils.init(System.currentTimeMillis(), (long) d2JsonModel.getTypes().size());
+        log.info("Generating Types...");
         d2JsonModel.getTypes().forEach(this::generateClass);
+        log.info("Generating files... done!");
     }
 
     private void generateClass(final MessageModel messageModel){
+        OutputUtils.printProgress();
         StringBuilder builder = new StringBuilder();
         builder.append("package ").append(messageModel.getNamespace()).append(";");
         builder.append(StrUtils.appendLine(getImports(messageModel)));
@@ -38,7 +57,7 @@ public class ProtocolBuilder {
 
         builder.append(StrUtils.appendLine(classString));
         builder.append(StrUtils.appendLine(
-            StrUtils.formatTab("public static final int PROTOCOL_ID = %s;", messageModel.getProtocolId()))
+            StrUtils.formatTab("public static final int %s = %s;", PROCOTOL_ID, messageModel.getProtocolId()))
         );
 
         builder.append(System.lineSeparator());
@@ -53,16 +72,85 @@ public class ProtocolBuilder {
 
         builder.append(System.lineSeparator());
 
+        builder.append(StrUtils.appendFormatedLine(1, "public %s(){}", messageModel.getName()));
+
+        builder.append(System.lineSeparator());
+
+        String constructorParams = messageModel
+            .getFieldModels()
+            .stream()
+            .map(field -> field.getJavaType() + " " + field.getName())
+            .collect(Collectors.joining(", "));
+
+        builder.append(StrUtils.appendFormatedLine(1, "public %s(%s){", messageModel.getName(), constructorParams));
+        messageModel.getFieldModels().forEach(field ->
+            builder.append(StrUtils.appendFormatedLine(2, "this.%s = %s;", field.getName(), field.getName()))
+        );
+        builder.append(StrUtils.appendLineTabbed("}"));
+
+        builder.append(System.lineSeparator());
+
         builder.append(StrUtils.appendLineTabbed("@Override"));
         builder.append(StrUtils.appendLineTabbed("public void Serialize(DofusDataWriter writer) {"));
+        builder.append(StrUtils.appendLineTabbed(2, "try {"));
+
+        boolean bbwSerialize = messageModel.getFieldModels().stream().anyMatch(FieldModel::isBbw);
+
+        if (bbwSerialize) {
+            builder.append(StrUtils.appendLineTabbed(3, "byte flag = 0;"));
+        }
+
+        for (int i = 0; i < messageModel.getFieldModels().size(); i++) {
+            messageModel.getFieldModels().get(i).getSerializeMethod().forEach(method ->
+                builder.append(StrUtils.appendLineTabbed(3, method))
+            );
+
+            if (!bbwSerialize){
+                continue;
+            }
+
+            if (messageModel.getFieldModels().get(i).getBbwPosition() == 7) {
+                continue;
+            }
+
+
+            if (i == messageModel.getFieldModels().size() - 1){
+                builder.append(StrUtils.appendLineTabbed(3, "writer.writeByte(flag);"));
+            } else {
+                if (!messageModel.getFieldModels().get(i + 1).isBbw()){
+                    builder.append(StrUtils.appendLineTabbed(3, "writer.writeByte(flag);"));
+                }
+            }
+        }
+
+        builder.append(StrUtils.appendLineTabbed(2, "} catch (Exception e){"));
+        builder.append(StrUtils.appendLineTabbed(3, "e.printStackTrace();"));
+        builder.append(StrUtils.appendLineTabbed(2, "}"));
         builder.append(StrUtils.appendLineTabbed("}"));
 
         builder.append(System.lineSeparator());
 
         builder.append(StrUtils.appendLineTabbed("@Override"));
         builder.append(StrUtils.appendLineTabbed("public void Deserialise(DofusDataReader reader) {"));
-        builder.append(StrUtils.appendLineTabbed("}"));
 
+        builder.append(StrUtils.appendLineTabbed(2, "try {"));
+
+        boolean bbwDeserialize = messageModel.getFieldModels().stream().anyMatch(FieldModel::isBbw);
+
+        if (bbwDeserialize) {
+            builder.append(StrUtils.appendLineTabbed(3, "byte flag;"));
+        }
+
+        messageModel.getFieldModels().forEach(fieldModel ->
+            fieldModel.getDeserializeMethod().forEach(method ->
+                builder.append(StrUtils.appendLineTabbed(3, method))
+            )
+        );
+
+        builder.append(StrUtils.appendLineTabbed(2, "} catch (Exception e){"));
+        builder.append(StrUtils.appendLineTabbed(3, "e.printStackTrace();"));
+        builder.append(StrUtils.appendLineTabbed(2, "}"));
+        builder.append(StrUtils.appendLineTabbed("}"));
         builder.append(StrUtils.appendLine("}"));
 
         try {

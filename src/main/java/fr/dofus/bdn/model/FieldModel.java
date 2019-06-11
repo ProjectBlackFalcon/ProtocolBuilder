@@ -45,6 +45,10 @@ public class FieldModel {
     private long bbwPosition;
 
 
+    public long getBbwPosition() {
+        return bbwPosition;
+    }
+
     /**
      * Get the java formated type of the field
      *
@@ -131,7 +135,7 @@ public class FieldModel {
                 writeLengthMethod,
                 writeMethod,
                 name,
-                getJavaType()
+                type
             );
         } else {
             return SerializeUtils.serialiseSimpleField(useTypeManager, writeMethod, getJavaType(), name);
@@ -175,6 +179,10 @@ public class FieldModel {
 
     public boolean isBbw() {
         return bbw;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String getImportType() {

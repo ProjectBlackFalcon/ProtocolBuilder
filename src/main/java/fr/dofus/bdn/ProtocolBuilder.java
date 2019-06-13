@@ -211,6 +211,7 @@ public class ProtocolBuilder {
 
     private void generateEnum(final EnumModel enumModel) {
         OutputUtils.printProgress();
+
         StringBuilder builder = new StringBuilder();
         builder.append("package com.ankamagames.dofus.network.enums;");
 

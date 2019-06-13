@@ -2,11 +2,13 @@ package fr.dofus.bdn.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
@@ -17,8 +19,6 @@ import fr.dofus.bdn.model.D2JsonModel;
 public class FilesUtils {
 
     private static final Logger log = Logger.getLogger(FilesUtils.class);
-
-    private static final String PATH_D2JSON_EXE = "src/main/resources/d2json.exe";
 
     private static String outputDirectory = "output/";
 
@@ -37,8 +37,13 @@ public class FilesUtils {
      * @throws IOException Exception if the process fails
      */
     public static D2JsonModel useD2Json(final String pathToInvoker) throws IOException {
-        log.info("Starting d2json.exe");
-        Process process = new ProcessBuilder(PATH_D2JSON_EXE, pathToInvoker).start();
+        log.info("Using d2json.exe");
+        File temp = File.createTempFile("d2json", ".tmp");
+        InputStream input = FilesUtils.class.getClassLoader().getResourceAsStream("d2json.exe");
+        FileUtils.copyInputStreamToFile(input, temp);
+        input.close();
+
+        Process process = new ProcessBuilder(temp.getPath(), pathToInvoker).start();
         String result = IOUtils.toString(process.getInputStream(), "UTF-8");
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(result, D2JsonModel.class);

@@ -20,6 +20,8 @@ public class FilesUtils {
 
     private static final String PATH_D2JSON_EXE = "src/main/resources/d2json.exe";
 
+    private static String outputDirectory = "output/";
+
     /**
      * Private constructor.
      */
@@ -50,9 +52,9 @@ public class FilesUtils {
      * @param path    The path to the file
      */
     public static void writeFile(String content, String path) throws IOException {
-        File file = new File(Paths.get("output/" + path).getParent().toString());
+        File file = new File(Paths.get(outputDirectory + path).getParent().toString());
         if (!file.exists()) file.mkdirs();
-        Files.write(Paths.get("output/" + path), content.getBytes());
+        Files.write(Paths.get(outputDirectory + path), content.getBytes());
 
     }
 
@@ -66,5 +68,11 @@ public class FilesUtils {
         return new String(Files.readAllBytes(Paths.get(url.toURI())));
     }
 
+    public static void setOutputDirectory(String outputDirectory) {
+        if (!outputDirectory.endsWith("/")) {
+            outputDirectory += "/";
+        }
 
+        FilesUtils.outputDirectory = outputDirectory;
+    }
 }

@@ -13,11 +13,10 @@ public class SerializeUtils {
 
     }
 
-
     public static List<String> serialiseBbw(final long bbwPosition, final String name){
         List<String> serialiseList = new ArrayList<>();
         serialiseList.add(String.format(
-            "flag = BooleanByteWrapper.SetFlag(%s, flag, %s);",
+            "flag = BooleanByteWrapper.setFlag(%s, flag, %s);",
             bbwPosition,
             name)
         );
@@ -61,11 +60,11 @@ public class SerializeUtils {
                                                     final String type,
                                                     final String name){
         if (useTypeManager) {
-            return Collections.singletonList(String.format("writer.%s(%s.%s);", writeMethod, type, PROCOTOL_ID));
+            return Collections.singletonList(String.format("writer.writeShort(%s.%s);", type, PROCOTOL_ID));
         } else if (writeMethod.isEmpty()) {
             return Collections.singletonList(String.format("%s.serialize(writer);", name));
         } else {
-            return Collections.singletonList(String.format("writer.%s(this.%s());", writeMethod, name));
+            return Collections.singletonList(String.format("writer.%s(this.%s);", writeMethod, name));
         }
     }
 }

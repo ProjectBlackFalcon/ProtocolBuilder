@@ -54,15 +54,23 @@ public final class TypeUtils {
         return var;
     }
 
+    /**
+     * Get the java formated type of the field
+     *
+     * @return String
+     */
+    public static String getJavaType(boolean isVector, String type) {
+        return isVector ? TypeUtils.getJavaListFromAsType(type) : TypeUtils.getJavaTypeFromAsType(type);
+    }
 
     /**
      * Convert As type into Java type
      *
-     * @param type As type
+     * @param type As types
      * @return Java type
      */
     public static String getJavaTypeFromAsType(String type) {
-        if (type.contains("int")) {
+        if (type.contains("int8") || type.contains("int16") || type.contains("int32") || type.contains("int64")) {
             return type.contains("int64") ? "long" : "int";
         } else if (type.contains("float")) {
             return type.equals("float64") ? "double" : "float";

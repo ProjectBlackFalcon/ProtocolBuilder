@@ -14,8 +14,7 @@ public class OutputUtils {
             throw new Error("Please init startTime and total");
         }
 
-        long eta = current == 0 ? 0 :
-            (total - current) * (System.currentTimeMillis() - startTime) / current;
+        long eta = current == 0 ? 0 : (total - current) * (System.currentTimeMillis() - startTime) / current;
 
         String etaHms = current == 0 ? "N/A" :
             String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(eta),

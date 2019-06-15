@@ -55,7 +55,7 @@ public class FieldModel {
      * @return String
      */
     public String getJavaType() {
-        return isVector ? TypeUtils.getJavaListFromAsType(type) : TypeUtils.getJavaTypeFromAsType(type);
+        return TypeUtils.getJavaType(isVector, type);
     }
 
 
@@ -152,6 +152,7 @@ public class FieldModel {
             "readShort" :
             TypeUtils.getReadMethod(writeLengthMethod);
 
+
         if (bbw) {
             return DeserializeUtils.deserialiseBbw(bbwPosition, name);
         } else if (isVector) {
@@ -162,7 +163,7 @@ public class FieldModel {
                 readLengthMethod,
                 writeMethod,
                 name,
-                getJavaType()
+                type
             );
         } else {
             return DeserializeUtils.deserialiseSimpleField(useTypeManager, writeMethod, getJavaType(), name);

@@ -17,9 +17,9 @@ public class DeserializeUtils {
         }
         deserialiseList.add(String.format(
             "this.%s = BooleanByteWrapper.getFlag(flag, (byte) %s);",
-            bbwPosition,
-            name)
-        );
+            name,
+            bbwPosition)
+            );
         return deserialiseList;
     }
 
@@ -36,12 +36,12 @@ public class DeserializeUtils {
 
         deserialiseList.add(String.format("this.%s = new ArrayList<%s>();",
             name,
-            TypeUtils.getJavaPrimitiveType(type))
+            TypeUtils.getJavaPrimitiveType(TypeUtils.getJavaTypeFromAsType(type)))
         );
 
         if (isDynamicLength) {
             deserialiseList.add(String.format("int %s = reader.%s;", nameSize, readLengthMethod));
-            deserialiseList.add(String.format("for (int i = 0; i < this.%s.size(); i++) {", nameSize));
+            deserialiseList.add(String.format("for (int i = 0; i < %s; i++) {", nameSize));
         } else {
             deserialiseList.add(String.format("for (int i = 0; i < %s; i++) {", length));
         }
@@ -59,9 +59,9 @@ public class DeserializeUtils {
             deserialiseList.add(StrUtils.formatTab("%s %s = new %s();", type, nameInstance, type));
             deserialiseList.add(StrUtils.formatTab("%s.deserialize(reader);", nameInstance));
         } else {
-            deserialiseList.add(StrUtils.formatTab("%s %s = reader.%s;", type, nameInstance, readLengthMethod));
+            deserialiseList.add(StrUtils.formatTab("%s %s = reader.%s;", TypeUtils.getJavaTypeFromAsType(type), nameInstance, TypeUtils.getReadMethod(writeMethod)));
         }
-        deserialiseList.add(StrUtils.formatTab("this.%s.add(%s)", name, nameInstance));
+        deserialiseList.add(StrUtils.formatTab("this.%s.add(%s);", name, nameInstance));
         deserialiseList.add("}");
         return deserialiseList;
     }

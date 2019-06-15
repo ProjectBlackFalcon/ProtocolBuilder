@@ -2,6 +2,7 @@ package fr.dofus.bdn;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,8 +29,7 @@ public class ProtocolBuilder {
     }
 
     public void generateClasses() {
-        long startTime = System.currentTimeMillis();
-        log.info("Generating files...");
+
 
         OutputUtils.init(System.currentTimeMillis(), (long) d2JsonModel.getMessages().size());
         log.info("Generating Messages...");
@@ -43,8 +43,7 @@ public class ProtocolBuilder {
         log.info("Generating Enums...");
         d2JsonModel.getEnums().forEach(this::generateEnum);
 
-        long elapsedTime = System.currentTimeMillis() - startTime;
-        log.info(String.format("Generating files... done in %s,%ss!", elapsedTime / 1000, elapsedTime % 1000));
+
     }
 
     private void generateClass(final MessageModel messageModel) {
@@ -55,7 +54,7 @@ public class ProtocolBuilder {
 
         String classString = String.format("public class %s %s {", messageModel.getName(),
             messageModel.getParents().isEmpty()
-                ? StrUtils.EMPTY_STRING
+                ? "extends NetworkMessage"
                 : "extends " + messageModel.getParents()
         );
 
@@ -76,9 +75,12 @@ public class ProtocolBuilder {
 
         messageModel.getFieldModels().forEach(field -> builder.append(StrUtils.appendLineTabbed(field.getGetter())));
 
-        builder.append(System.lineSeparator());
 
-        builder.append(StrUtils.appendFormatedLine(1, "public %s(){}", messageModel.getName()));
+        if (!messageModel.getFieldModels().isEmpty()){
+            builder.append(System.lineSeparator());
+            builder.append(StrUtils.appendFormatedLine(1, "public %s(){}", messageModel.getName()));
+        }
+
 
         builder.append(System.lineSeparator());
 
@@ -96,38 +98,38 @@ public class ProtocolBuilder {
 
         builder.append(System.lineSeparator());
 
+        List<FieldModel> bbwFields = messageModel.getFieldModels().stream()
+            .filter(FieldModel::isBbw)
+            .collect(Collectors.toList());
+
+        List<FieldModel> otherFields = messageModel.getFieldModels().stream()
+            .filter(field -> !field.isBbw())
+            .collect(Collectors.toList());
+
+
         builder.append(StrUtils.appendLineTabbed("@Override"));
-        builder.append(StrUtils.appendLineTabbed("public void Serialize(DofusDataWriter writer) {"));
+        builder.append(StrUtils.appendLineTabbed("public void serialize(DofusDataWriter writer) {"));
         builder.append(StrUtils.appendLineTabbed(2, "try {"));
 
-        boolean bbwSerialize = messageModel.getFieldModels().stream().anyMatch(FieldModel::isBbw);
 
-        if (bbwSerialize) {
+        if (!bbwFields.isEmpty()) {
             builder.append(StrUtils.appendLineTabbed(3, "byte flag = 0;"));
         }
 
-        for (int i = 0; i < messageModel.getFieldModels().size(); i++) {
-            messageModel.getFieldModels().get(i).getSerializeMethod().forEach(method ->
+        for (int i = 0; i < bbwFields.size(); i++) {
+            bbwFields.get(i).getSerializeMethod().forEach(method ->
                 builder.append(StrUtils.appendLineTabbed(3, method))
             );
 
-            if (!bbwSerialize) {
-                continue;
-            }
-
-            if (messageModel.getFieldModels().get(i).getBbwPosition() == 7) {
-                continue;
-            }
-
-
-            if (i == messageModel.getFieldModels().size() - 1) {
+            if (i == bbwFields.size() - 1 && bbwFields.get(i).getBbwPosition() != 7) {
                 builder.append(StrUtils.appendLineTabbed(3, "writer.writeByte(flag);"));
-            } else {
-                if (!messageModel.getFieldModels().get(i + 1).isBbw()) {
-                    builder.append(StrUtils.appendLineTabbed(3, "writer.writeByte(flag);"));
-                }
             }
         }
+
+
+        otherFields.forEach(field -> field.getSerializeMethod().forEach(method ->
+            builder.append(StrUtils.appendLineTabbed(3, method))
+        ));
 
         builder.append(StrUtils.appendLineTabbed(2, "} catch (Exception e){"));
         builder.append(StrUtils.appendLineTabbed(3, "e.printStackTrace();"));
@@ -137,21 +139,21 @@ public class ProtocolBuilder {
         builder.append(System.lineSeparator());
 
         builder.append(StrUtils.appendLineTabbed("@Override"));
-        builder.append(StrUtils.appendLineTabbed("public void Deserialise(DofusDataReader reader) {"));
+        builder.append(StrUtils.appendLineTabbed("public void deserialize(DofusDataReader reader) {"));
 
         builder.append(StrUtils.appendLineTabbed(2, "try {"));
 
-        boolean bbwDeserialize = messageModel.getFieldModels().stream().anyMatch(FieldModel::isBbw);
-
-        if (bbwDeserialize) {
-            builder.append(StrUtils.appendLineTabbed(3, "byte flag;"));
+        if (!bbwFields.isEmpty()) {
+            builder.append(StrUtils.appendLineTabbed(3, "byte flag = 0;"));
         }
 
-        messageModel.getFieldModels().forEach(fieldModel ->
-            fieldModel.getDeserializeMethod().forEach(method ->
-                builder.append(StrUtils.appendLineTabbed(3, method))
-            )
-        );
+        bbwFields.forEach(field -> field.getDeserializeMethod().forEach(method ->
+            builder.append(StrUtils.appendLineTabbed(3, method))
+        ));
+
+        otherFields.forEach(field -> field.getDeserializeMethod().forEach(method ->
+            builder.append(StrUtils.appendLineTabbed(3, method))
+        ));
 
         builder.append(StrUtils.appendLineTabbed(2, "} catch (Exception e){"));
         builder.append(StrUtils.appendLineTabbed(3, "e.printStackTrace();"));
@@ -173,14 +175,17 @@ public class ProtocolBuilder {
     private String getImports(final MessageModel messageModel) {
         Set<String> imports = new HashSet<>();
 
-        imports.add(StrUtils.appendLine("import java.io.IOException;"));
-        imports.add(StrUtils.appendLine("import com.ankamagames.dofus.utils.DofusDataReader;"));
-        imports.add(StrUtils.appendLine("import com.ankamagames.dofus.utils.DofusDataWriter;"));
+        imports.add(StrUtils.appendLine("import com.ankamagames.dofus.network.utils.DofusDataReader;"));
+        imports.add(StrUtils.appendLine("import com.ankamagames.dofus.network.utils.DofusDataWriter;"));
 
         if (!messageModel.getParents().isEmpty()) {
-            imports.add(StrUtils.appendLine("import " + messageModel.getParents()));
+            String parentNamespace = this.d2JsonModel.findMessageByName(messageModel.getParents()).getNamespace();
+
+            if (!parentNamespace.equals(messageModel.getNamespace())){
+                imports.add(StrUtils.appendLine("import " + parentNamespace + "." + messageModel.getParents() + ";"));
+            }
         } else {
-            imports.add(StrUtils.appendLine("import com.ankamagames.dofus.NetworkMessage"));
+            imports.add(StrUtils.appendLine("import com.ankamagames.dofus.network.NetworkMessage;"));
         }
 
         messageModel.getFieldModels().forEach(field -> {
@@ -189,17 +194,17 @@ public class ProtocolBuilder {
                 imports.add(StrUtils.appendLine("import java.util.List;"));
             }
             if (field.isBbw()) {
-                imports.add(StrUtils.appendLine("import com.ankamagames.dofus.util.types.BooleanByteWrapper;"));
+                imports.add(StrUtils.appendLine("import com.ankamagames.dofus.network.utils.types.BooleanByteWrapper;"));
             }
             if (field.isUseTypeManager()) {
-                imports.add(StrUtils.appendLine("import com.ankamagames.dofus.utils.ProtocolTypeManager;"));
+                imports.add(StrUtils.appendLine("import com.ankamagames.dofus.network.utils.ProtocolTypeManager;"));
             }
 
             String type = field.getImportType();
 
             if (type != null) {
                 imports.add(StrUtils.appendLine(
-                    "import " + this.d2JsonModel.findMessageByName(type).getNamespace() + "." + type)
+                    "import " + this.d2JsonModel.findMessageByName(type).getNamespace() + "." + type + ";")
                 );
             }
         });
@@ -214,6 +219,10 @@ public class ProtocolBuilder {
 
         StringBuilder builder = new StringBuilder();
         builder.append("package com.ankamagames.dofus.network.enums;");
+
+        builder.append(System.lineSeparator());
+
+        builder.append("import java.util.stream.Stream;");
 
         builder.append(System.lineSeparator());
 
@@ -235,7 +244,7 @@ public class ProtocolBuilder {
 
         builder.append(System.lineSeparator());
 
-        builder.append(StrUtils.appendFormatedLine(1, "public %s(int value){ this.value = value; }",
+        builder.append(StrUtils.appendFormatedLine(1, "%s(int value){ this.value = value; }",
             enumModel.getName())
         );
 

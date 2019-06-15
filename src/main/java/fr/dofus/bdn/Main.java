@@ -39,8 +39,15 @@ public class Main {
 
         D2JsonModel d2json = FilesUtils.useD2Json(pathInvoker);
 
+        long startTime = System.currentTimeMillis();
+        log.info("Generating files...");
+
         ProtocolBuilder builder = new ProtocolBuilder(d2json);
         builder.generateClasses();
+        NameIdBuilder.createNameId(d2json);
+
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        log.info(String.format("Generating files... done in %s,%ss!", elapsedTime / 1000, elapsedTime % 1000));
     }
 
 

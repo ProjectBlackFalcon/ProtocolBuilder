@@ -111,6 +111,9 @@ public class ProtocolBuilder {
         builder.append(StrUtils.appendLineTabbed("public void serialize(DofusDataWriter writer) {"));
         builder.append(StrUtils.appendLineTabbed(2, "try {"));
 
+        if (!messageModel.getParents().isEmpty()){
+            builder.append(StrUtils.appendLineTabbed(3, "super.serialize(writer);"));
+        }
 
         if (!bbwFields.isEmpty()) {
             builder.append(StrUtils.appendLineTabbed(3, "byte flag = 0;"));
@@ -142,6 +145,11 @@ public class ProtocolBuilder {
         builder.append(StrUtils.appendLineTabbed("public void deserialize(DofusDataReader reader) {"));
 
         builder.append(StrUtils.appendLineTabbed(2, "try {"));
+
+        if (!messageModel.getParents().isEmpty()){
+            builder.append(StrUtils.appendLineTabbed(3, "super.deserialize(reader);"));
+        }
+
 
         if (!bbwFields.isEmpty()) {
             builder.append(StrUtils.appendLineTabbed(3, "byte flag = 0;"));

@@ -25,11 +25,7 @@ public class NameIdBuilder {
         JsonNode rootNode = mapper.createObjectNode();
 
         d2JsonModel.getMessages().forEach(message -> (
-            (ObjectNode) rootNode).put(String.valueOf(message.getProtocolId()), message.getName())
-        );
-
-        d2JsonModel.getTypes().forEach(message -> (
-            (ObjectNode) rootNode).put(String.valueOf(message.getProtocolId()), message.getName())
+            (ObjectNode) rootNode).put(String.valueOf(message.getProtocolId()), message.getNamespace() + "." + message.getName())
         );
 
         FilesUtils.writeFile(mapper.writeValueAsString(rootNode), PATH);

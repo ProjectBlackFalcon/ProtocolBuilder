@@ -27,7 +27,7 @@ public final class StrUtils {
      */
     public static String getSetterName(String name, String type) {
         return String.format("set%s(%s %s)",
-            name.substring(1).toUpperCase() + name.substring(1, name.length()),
+            name.substring(0, 1).toUpperCase() + name.substring(1, name.length()),
             type,
             name
         );

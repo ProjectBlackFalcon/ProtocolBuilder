@@ -75,12 +75,14 @@ public class ProtocolBuilder {
 
         messageModel.getFieldModels().forEach(field -> builder.append(StrUtils.appendLineTabbed(field.getGetter())));
 
+        builder.append(System.lineSeparator());
+
+        messageModel.getFieldModels().forEach(field -> builder.append(StrUtils.appendLineTabbed(field.getSetter())));
 
         if (!messageModel.getFieldModels().isEmpty()){
             builder.append(System.lineSeparator());
             builder.append(StrUtils.appendFormatedLine(1, "public %s(){}", messageModel.getName()));
         }
-
 
         builder.append(System.lineSeparator());
 

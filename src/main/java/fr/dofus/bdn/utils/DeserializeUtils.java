@@ -72,6 +72,17 @@ public class DeserializeUtils {
                                                     final String name) {
         List<String> deserialiseList = new ArrayList<>();
 
+        if (type.equals("ArenaRanking") || type.equals("ArenaLeagueRanking")){
+            deserialiseList.add("if(reader.readByte() == 0){");
+            deserialiseList.add(StrUtils.formatTab(1, "this.%s = null;", name));
+            deserialiseList.add("} else {");
+            deserialiseList.add(StrUtils.formatTab(1, "this.%s = new %s();", name, type));
+            deserialiseList.add(StrUtils.formatTab(1, "this.%s.deserialize(reader);", name, type));
+            deserialiseList.add("}");
+            return deserialiseList;
+
+        }
+
         if (writeMethod.isEmpty()) {
             if (useTypeManager) {
                 deserialiseList.add(

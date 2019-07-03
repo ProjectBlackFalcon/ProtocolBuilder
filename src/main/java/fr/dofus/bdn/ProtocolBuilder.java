@@ -174,7 +174,7 @@ public class ProtocolBuilder {
         try {
             FilesUtils.writeFile(
                 builder.toString(),
-                messageModel.getNamespace().replaceAll("\\.", "\\\\") + "\\" + messageModel.getName() + ".java"
+                messageModel.getNamespace().replaceAll("\\.", "/") + "/" + messageModel.getName() + ".java"
             );
         } catch (IOException e) {
             throw new Error("Cannot generate file", e);

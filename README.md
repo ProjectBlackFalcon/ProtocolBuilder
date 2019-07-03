@@ -20,6 +20,8 @@ or
 
 You can also create a jar by running `mvn clean package`.
 
+Note : On linux you need to have Wine installed.
+
 ## Arguments
 
 The builder needs a DofusInvoker.swf in order to extract the data.

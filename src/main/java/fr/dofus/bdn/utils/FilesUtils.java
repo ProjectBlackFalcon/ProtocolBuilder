@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,14 +37,24 @@ public class FilesUtils {
      * @return The datas formatted as JSON
      * @throws IOException Exception if the process fails
      */
-    public static D2JsonModel useD2Json(final String pathToInvoker) throws IOException {
+    public static D2JsonModel useD2Json(final String pathToInvoker) throws IOException, InterruptedException {
         log.info("Using d2json.exe");
         File temp = File.createTempFile("d2json", ".tmp");
+        temp.setExecutable(true);
+        temp.setReadable(true);
+        temp.setWritable(true);
         InputStream input = FilesUtils.class.getClassLoader().getResourceAsStream("d2json.exe");
         FileUtils.copyInputStreamToFile(input, temp);
         input.close();
 
-        Process process = new ProcessBuilder(temp.getPath(), pathToInvoker).start();
+        Process process = null;
+
+        if (SystemUtils.IS_OS_LINUX){
+            process = new ProcessBuilder("wine", temp.getPath(), pathToInvoker).start();
+        } else {
+            process = new ProcessBuilder(temp.getPath(), pathToInvoker).start();
+        }
+
         String result = IOUtils.toString(process.getInputStream(), "UTF-8");
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(result, D2JsonModel.class);

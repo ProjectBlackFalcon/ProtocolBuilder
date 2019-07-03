@@ -15,8 +15,8 @@ public class NameIdBuilder {
 
     private static final Logger log = Logger.getLogger(NameIdBuilder.class);
 
-    private static final String PATH_MESSAGES = "resources/MessageNameId.json";
-    private static final String PATH_TYPES = "resources/TypeNameId.json";
+    private static final String PATH_MESSAGES = "../resources/MessageNameId.json";
+    private static final String PATH_TYPES = "../resources/TypeNameId.json";
 
 
     public static void createNameId(final D2JsonModel d2JsonModel) throws IOException {

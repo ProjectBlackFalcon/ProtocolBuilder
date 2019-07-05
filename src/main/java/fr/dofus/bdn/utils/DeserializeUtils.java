@@ -80,7 +80,6 @@ public class DeserializeUtils {
             deserialiseList.add(StrUtils.formatTab(1, "this.%s.deserialize(reader);", name, type));
             deserialiseList.add("}");
             return deserialiseList;
-
         }
 
         if (writeMethod.isEmpty()) {

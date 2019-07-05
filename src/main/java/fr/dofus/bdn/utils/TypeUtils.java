@@ -39,7 +39,7 @@ public final class TypeUtils {
                 var = "readVarInt()";
                 break;
             case "writeVarLong":
-                var = "readVarLong()";
+                var = "readVarUhLong()";
                 break;
             case "writeBoolean":
                 var = "readBoolean()";

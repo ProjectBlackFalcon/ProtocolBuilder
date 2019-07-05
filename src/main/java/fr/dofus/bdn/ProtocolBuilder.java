@@ -152,7 +152,6 @@ public class ProtocolBuilder {
             builder.append(StrUtils.appendLineTabbed(3, "super.deserialize(reader);"));
         }
 
-
         if (!bbwFields.isEmpty()) {
             builder.append(StrUtils.appendLineTabbed(3, "byte flag = 0;"));
         }
